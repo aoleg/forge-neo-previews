@@ -178,6 +178,22 @@ _NOISE_TOKEN = re.compile(r"^(?:v\d+|r\d+|e\d+|ep\d+|\d+|\d+(?:k|e|ep|steps?|epo
 # Only letters followed by digits ("Krea2", "SDXL1"). A lower-to-upper split
 # would break stylised names such as "HaDeS".
 _LETTER_DIGIT = re.compile(r"(?<=[A-Za-z])(?=\d)")
+_LOWER_UPPER = re.compile(r"(?<=[a-z])(?=[A-Z])")
+
+
+def _strip_glued(token: str, stopwords: set[str]) -> str:
+    """Drop stopwords joined to the start or end of a word by a capital.
+
+    "mossPhotographic" -> "Photographic". Inner parts are never removed and
+    a word with no stopword at either end stays as it is, so "HaDeS" keeps
+    its spelling.
+    """
+    parts = _LOWER_UPPER.split(token)
+    while len(parts) > 1 and parts[0].casefold() in stopwords:
+        parts.pop(0)
+    while len(parts) > 1 and parts[-1].casefold() in stopwords:
+        parts.pop()
+    return "".join(parts)
 
 
 def stopword_set(text: str) -> set[str]:
@@ -204,7 +220,7 @@ def clean_name(stem: str, stopwords: set[str]) -> str:
     tokens = [t for t in _SEPARATORS.split(text) if keep(t)]
     words = []
     for token in tokens:
-        words.extend(p for p in _LETTER_DIGIT.split(token) if keep(p))
+        words.extend(p for p in _LETTER_DIGIT.split(_strip_glued(token, stopwords)) if keep(p))
     words = [w for w in words if len(w) > 1 or w.isalpha() and w.lower() in ("a", "i")]
     result = " ".join(words).strip()
     if result:

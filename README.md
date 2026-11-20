@@ -73,7 +73,7 @@ The first of these that the LoRA has gives the prompt:
 
 The LoRA is added in front, as the card would add it: `<lora:name:weight>`. The weight is the LoRA's "preferred weight", or the default multiplier from the settings. The negative prompt is the LoRA's own "negative text", or the negative template.
 
-Many LoRAs from Hugging Face carry no trigger at all, so the file name is the common case. `lokr-moss-kodachrome-v1.safetensors` gives "An image of kodachrome": the words `lokr` and `moss` are on the list of common words, and `v1` is a version.
+Many LoRAs from Hugging Face carry no trigger at all, so the file name is the common case. `lokr-moss-kodachrome-v1.safetensors` gives "An image of kodachrome": the words `lokr` and `moss` are on the list of common words, and `v1` is a version. A common word joined to the start or end of a word by a capital letter is dropped too: `mossPhotographic` gives "Photographic".
 
 A file name often names a style, not a subject, and "An image of kodachrome" leaves the model guessing what to show. A template with a subject usually gives better previews, for example:
 
