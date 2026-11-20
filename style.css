@@ -1,0 +1,26 @@
+.npv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.npv-table th,
+.npv-table td {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.25em 0.5em;
+    border-bottom: 1px solid var(--border-color-primary);
+    overflow-wrap: anywhere;
+}
+
+.npv-table td:first-child {
+    white-space: nowrap;
+}
+
+.npv-table .npv-neg {
+    opacity: 0.75;
+}
+
+.npv-table tr.npv-unlisted td {
+    opacity: 0.6;
+}
