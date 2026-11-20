@@ -28,6 +28,8 @@ def main(argv=None) -> int:
     parser.add_argument("--sample-template", default=prompt.Templates.sample)
     parser.add_argument("--name-template", default=prompt.Templates.name)
     parser.add_argument("--negative-template", default=prompt.Templates.negative)
+    parser.add_argument("--prompt", default="", help="as the main prompt box: used for every LoRA, {lora} becomes the LoRA's own prompt")
+    parser.add_argument("--negative", default="", help="as the main negative prompt box: {lora} becomes the LoRA's own negative")
     parser.add_argument("--width", type=int, default=160, help="cut prompts to this many characters (0 = never)")
     args = parser.parse_args(argv)
 
@@ -43,7 +45,7 @@ def main(argv=None) -> int:
         return 2
 
     templates = prompt.Templates(trigger=args.trigger_template, sample=args.sample_template, name=args.name_template, negative=args.negative_template, default_weight=args.weight)
-    items = plan.plan_folder(folder, templates, overwrite=args.overwrite, use_thumbnails=not args.no_thumbnails)
+    items = plan.plan_folder(folder, templates, overwrite=args.overwrite, use_thumbnails=not args.no_thumbnails, main_prompt=args.prompt, main_negative=args.negative)
 
     counts: dict[str, int] = {}
     sources: dict[str, int] = {}

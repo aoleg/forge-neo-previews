@@ -42,8 +42,20 @@ def default_alias(path: str, metadata: dict) -> str:
     return metadata.get("ss_output_name") or os.path.splitext(os.path.basename(path))[0]
 
 
-def plan_one(path: str, templates: prompts.Templates, *, overwrite: bool = False, use_thumbnails: bool = True, alias: Callable[[str, dict], str | None] = default_alias) -> Item:
-    """alias returns the name for <lora:NAME:...>, or None when Forge cannot load the file."""
+def plan_one(
+    path: str,
+    templates: prompts.Templates,
+    *,
+    overwrite: bool = False,
+    use_thumbnails: bool = True,
+    alias: Callable[[str, dict], str | None] = default_alias,
+    main_prompt: str = "",
+    main_negative: str = "",
+) -> Item:
+    """alias returns the name for <lora:NAME:...>, or None when Forge cannot load the file.
+
+    main_prompt / main_negative: the txt2img prompt boxes; see prompt.with_main_prompt.
+    """
     metadata = scan.read_metadata(path)
     existing = scan.existing_preview(path, metadata)
     if existing and not overwrite:
@@ -54,7 +66,7 @@ def plan_one(path: str, templates: prompts.Templates, *, overwrite: bool = False
         if found:
             return Item(path, EXTRACT, existing=existing, thumbnail=found, target=thumbnail.target_path(path, found[1]))
 
-    chosen = prompts.choose(path, metadata, templates)
+    chosen = prompts.with_main_prompt(prompts.choose(path, metadata, templates), main_prompt, main_negative)
     name = alias(path, metadata)
     if name is None:
         return Item(path, UNLISTED, existing=existing, prompt=chosen)

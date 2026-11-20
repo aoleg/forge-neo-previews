@@ -268,6 +268,45 @@ def choose(lora_path: str, metadata: dict, templates: Templates) -> Prompt:
     return Prompt(source=source, text=text, negative=negative, weight=weight, values=values)
 
 
+WILDCARD = "{lora}"
+
+
+def _substitute(text: str, values: dict) -> str:
+    """Plain replace of {key} placeholders; the user's own spacing and line breaks stay.
+
+    An empty value takes one neighbouring comma with it, so "blurry, {lora}"
+    with nothing for {lora} gives "blurry", not "blurry,".
+    """
+    for key, value in values.items():
+        placeholder = re.escape("{" + key + "}")
+        if not value:
+            text = re.sub(r"[ \t]*,[ \t]*" + placeholder + r"|" + placeholder + r"[ \t]*,[ \t]*", "", text)
+        text = re.sub(placeholder, lambda _m, v=value: v, text)
+    return text.strip()
+
+
+def with_main_prompt(chosen: Prompt, main_prompt: str = "", main_negative: str = "") -> Prompt:
+    """Use the txt2img prompt boxes when they hold text.
+
+    A non-empty main prompt is the prompt for every LoRA. {lora} in it becomes
+    the LoRA's own prompt from the templates (chosen.text); {trigger},
+    {sample} and {name} give the bare values. The negative prompt works the
+    same way, with {lora} becoming the LoRA's own negative. An empty box
+    leaves the templates' result as it is.
+    """
+    main_prompt = (main_prompt or "").strip()
+    main_negative = (main_negative or "").strip()
+    if not main_prompt and not main_negative:
+        return chosen
+    text, negative, source = chosen.text, chosen.negative, chosen.source
+    if main_prompt:
+        text = _substitute(main_prompt, {"lora": chosen.text, **chosen.values})
+        source = f"main prompt, {WILDCARD} = {chosen.source}" if WILDCARD in main_prompt else "main prompt"
+    if main_negative:
+        negative = _substitute(main_negative, {"lora": chosen.negative, **chosen.values})
+    return Prompt(source=source, text=text, negative=negative, weight=chosen.weight, values=chosen.values)
+
+
 def format_weight(weight: float) -> str:
     return f"{weight:g}"
 

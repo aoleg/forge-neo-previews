@@ -128,11 +128,12 @@ def forge_alias(paths: list[str]):
     return alias
 
 
-def make_plan(folder: str, overwrite: bool, use_thumbnails: bool) -> list[plan.Item]:
+def make_plan(folder: str, overwrite: bool, use_thumbnails: bool, main_prompt: str = "", main_negative: str = "") -> list[plan.Item]:
     paths = scan.walk(folder)
     alias = forge_alias(paths)
     templates = templates_from_opts()
-    return [plan.plan_one(path, templates, overwrite=bool(overwrite), use_thumbnails=bool(use_thumbnails), alias=alias) for path in paths]
+    options = {"overwrite": bool(overwrite), "use_thumbnails": bool(use_thumbnails), "alias": alias, "main_prompt": main_prompt or "", "main_negative": main_negative or ""}
+    return [plan.plan_one(path, templates, **options) for path in paths]
 
 
 def _max_count(value) -> int:
@@ -142,12 +143,12 @@ def _max_count(value) -> int:
         return 0
 
 
-def dry_run(label, overwrite, use_thumbnails, max_count) -> str:
+def dry_run(label, overwrite, use_thumbnails, max_count, main_prompt="", main_negative="") -> str:
     folder = resolve_folder(label)
     if folder is None:
         return "<p>Choose a LoRA folder first.</p>"
     try:
-        items = make_plan(folder, overwrite, use_thumbnails)
+        items = make_plan(folder, overwrite, use_thumbnails, main_prompt, main_negative)
     except Exception as e:  # noqa: BLE001 - shown in the panel, traceback in the console
         import traceback
 
@@ -351,14 +352,35 @@ def generate(p, pending: list[plan.Item], result: report.RunResult, gallery: lis
 # ---------------------------------------------------------------- script
 
 
+HELP = (
+    "<p class='npv-help'>Optional: text in the main prompt is used for every LoRA, and <code>{lora}</code> in it is replaced by "
+    "that LoRA's own prompt (from its trigger, sample prompt or file name, see Settings &gt; LoRA Previews). "
+    "Leave the main prompt empty to use the LoRA's own prompt alone. The negative prompt works the same way.</p>"
+)
+
+PROMPT_IDS = {"txt2img_prompt": "main_prompt", "txt2img_neg_prompt": "main_negative"}
+
+
 class LoraPreviewsScript(scripts.Script):
+    def __init__(self):
+        super().__init__()
+        # The txt2img prompt boxes, caught as they are built (before ui()), so the dry run can read them.
+        self.main_prompt = None
+        self.main_negative = None
+
     def title(self):
         return TITLE
 
     def show(self, is_img2img):
         return not is_img2img
 
+    def after_component(self, component, **kwargs):
+        attribute = PROMPT_IDS.get(getattr(component, "elem_id", None))
+        if attribute:
+            setattr(self, attribute, component)
+
     def ui(self, is_img2img):
+        gr.HTML(HELP, elem_id=self.elem_id("help"))
         with gr.Row(elem_id=self.elem_id("folder_row")):
             folder = gr.Dropdown(label="LoRA folder (worked recursively)", choices=refresh_folders(), value=None, elem_id=self.elem_id("folder"))
             refresh = ToolButton(value=refresh_symbol, elem_id=self.elem_id("refresh"), tooltip="Refresh the folder list")
@@ -374,7 +396,11 @@ class LoraPreviewsScript(scripts.Script):
             return gr.update(choices=choices, value=current if current in choices else None)
 
         refresh.click(fn=on_refresh, inputs=[folder], outputs=[folder], show_progress=False)
-        dry.click(fn=dry_run, inputs=[folder, overwrite, use_thumbnails, max_count], outputs=[output])
+        prompt_boxes = [box for box in (self.main_prompt, self.main_negative) if box is not None]
+        if len(prompt_boxes) == 2:
+            dry.click(fn=dry_run, inputs=[folder, overwrite, use_thumbnails, max_count, *prompt_boxes], outputs=[output])
+        else:  # prompt boxes not found: the dry run shows the LoRAs' own prompts
+            dry.click(fn=dry_run, inputs=[folder, overwrite, use_thumbnails, max_count], outputs=[output])
         return [folder, overwrite, use_thumbnails, max_count]
 
     def run(self, p, label, overwrite, use_thumbnails, max_count):
@@ -382,7 +408,7 @@ class LoraPreviewsScript(scripts.Script):
         if folder is None:
             return Processed(p, [], p.seed, info="LoRA previews: choose a LoRA folder in the script panel.")
 
-        items = make_plan(folder, overwrite, use_thumbnails)
+        items = make_plan(folder, overwrite, use_thumbnails, p.prompt, p.negative_prompt)
         to_extract = [i for i in items if i.action == plan.EXTRACT]
         pending, later = report.limited(items, _max_count(max_count))
         result = report.RunResult(later=len(later))

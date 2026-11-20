@@ -49,7 +49,7 @@ Only the LoRAs for the loaded model can be applied, so choose a folder that hold
 
 Each preview is one image made with your current txt2img settings, with these changes:
 
-- the prompt and negative prompt are the LoRA's own (see below), and prompt styles are not applied;
+- the prompt and negative prompt are the LoRA's own, or your main prompt with the LoRA's own prompt in it (see below), and prompt styles are not applied;
 - hires fix is off;
 - batch size and batch count are 1;
 - every preview in a run uses the same seed, so they can be compared. With seed -1, one random seed is picked for the whole run.
@@ -82,6 +82,20 @@ A street photograph of a woman at a café table, {name}
 ```
 
 Every template can use `{trigger}`, `{sample}` and `{name}`. Braces that are not one of these three are left as they are.
+
+### Your own prompt for a whole folder
+
+Leave the main prompt box empty and each LoRA gets its own prompt as above. Write something in it and that text is the prompt for every LoRA of the run, with `{lora}` replaced by each LoRA's own prompt:
+
+```text
+A street photograph of a woman at a café table, {lora}, 35mm
+```
+
+With the default templates `{lora}` becomes "An image of kodachrome" and the like. For a prompt of your own, the bare values often read better: `{trigger}`, `{sample}` and `{name}` work in the main prompt too, and a placeholder with nothing to put in is dropped along with its comma. A prompt without any placeholder is used as it is, so all previews show the same scene. The LoRA's `<lora:...>` tag is always added in front, and other `<lora:...>` tags in your prompt, such as a speed LoRA, apply to every preview.
+
+The negative prompt box works the same way: empty, each LoRA gets its own negative; with text, that text is used, and `{lora}` in it becomes the LoRA's own negative.
+
+The dry run shows the prompts as they will be, from what is in the prompt boxes at that moment.
 
 ## A LoRA for another model
 
@@ -124,7 +138,7 @@ The extension holds a command-line version of the dry run. It needs Python 3.10 
 python -m neo_previews <LoRA folder>
 ```
 
-It lists what would be done for each LoRA and the prompt it would use. Add `--extract` to save the thumbnails the files carry, which needs no model. `--help` lists the other options.
+It lists what would be done for each LoRA and the prompt it would use. `--prompt` and `--negative` stand for the main prompt boxes. Add `--extract` to save the thumbnails the files carry, which needs no model. `--help` lists the other options.
 
 ## License
 
