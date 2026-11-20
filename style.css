@@ -13,8 +13,10 @@
     overflow-wrap: anywhere;
 }
 
-.npv-table td:first-child {
+.npv-table td:first-child,
+.npv-table td:nth-child(3) {
     white-space: nowrap;
+    overflow-wrap: normal;
 }
 
 .npv-table .npv-neg {
