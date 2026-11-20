@@ -354,8 +354,9 @@ def generate(p, pending: list[plan.Item], result: report.RunResult, gallery: lis
 
 HELP = (
     "<p class='npv-help'>Optional: text in the main prompt is used for every LoRA, and <code>{lora}</code> in it is replaced by "
-    "that LoRA's own prompt (from its trigger, sample prompt or file name, see Settings &gt; LoRA Previews). "
-    "Leave the main prompt empty to use the LoRA's own prompt alone. The negative prompt works the same way.</p>"
+    "that LoRA's trigger, its sample prompt, or its file name, whichever it has first. "
+    "Leave the main prompt empty to use the prompt templates under Settings &gt; LoRA Previews. "
+    "The negative prompt works the same way, with <code>{lora}</code> becoming the LoRA's own negative.</p>"
 )
 
 PROMPT_IDS = {"txt2img_prompt": "main_prompt", "txt2img_neg_prompt": "main_negative"}

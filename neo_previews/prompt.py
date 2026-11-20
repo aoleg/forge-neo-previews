@@ -271,6 +271,12 @@ def choose(lora_path: str, metadata: dict, templates: Templates) -> Prompt:
 WILDCARD = "{lora}"
 
 
+def lora_value(chosen: Prompt) -> str:
+    """What {lora} stands for in the main prompt: trigger, else sample, else name."""
+    values = chosen.values
+    return values.get("trigger") or values.get("sample") or values.get("name") or ""
+
+
 def _substitute(text: str, values: dict) -> str:
     """Plain replace of {key} placeholders; the user's own spacing and line breaks stay.
 
@@ -289,9 +295,10 @@ def with_main_prompt(chosen: Prompt, main_prompt: str = "", main_negative: str =
     """Use the txt2img prompt boxes when they hold text.
 
     A non-empty main prompt is the prompt for every LoRA. {lora} in it becomes
-    the LoRA's own prompt from the templates (chosen.text); {trigger},
-    {sample} and {name} give the bare values. The negative prompt works the
-    same way, with {lora} becoming the LoRA's own negative. An empty box
+    the bare value the LoRA's prompt was chosen from: its trigger, else its
+    sample prompt, else its cleaned file name, without the template around
+    it. {trigger}, {sample} and {name} give one value each. In a non-empty
+    negative prompt, {lora} becomes the LoRA's own negative. An empty box
     leaves the templates' result as it is.
     """
     main_prompt = (main_prompt or "").strip()
@@ -300,7 +307,7 @@ def with_main_prompt(chosen: Prompt, main_prompt: str = "", main_negative: str =
         return chosen
     text, negative, source = chosen.text, chosen.negative, chosen.source
     if main_prompt:
-        text = _substitute(main_prompt, {"lora": chosen.text, **chosen.values})
+        text = _substitute(main_prompt, {"lora": lora_value(chosen), **chosen.values})
         source = f"main prompt, {WILDCARD} = {chosen.source}" if WILDCARD in main_prompt else "main prompt"
     if main_negative:
         negative = _substitute(main_negative, {"lora": chosen.negative, **chosen.values})

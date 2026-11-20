@@ -85,13 +85,13 @@ Every template can use `{trigger}`, `{sample}` and `{name}`. Braces that are not
 
 ### Your own prompt for a whole folder
 
-Leave the main prompt box empty and each LoRA gets its own prompt as above. Write something in it and that text is the prompt for every LoRA of the run, with `{lora}` replaced by each LoRA's own prompt:
+Leave the main prompt box empty and each LoRA gets its own prompt as above. Write something in it and that text is the prompt for every LoRA of the run, with `{lora}` replaced by each LoRA's trigger, sample prompt or cleaned file name, the first of these that the LoRA has (see the table above). The templates are not used:
 
 ```text
 A street photograph of a woman at a café table, {lora}, 35mm
 ```
 
-With the default templates `{lora}` becomes "An image of kodachrome" and the like. For a prompt of your own, the bare values often read better: `{trigger}`, `{sample}` and `{name}` work in the main prompt too, and a placeholder with nothing to put in is dropped along with its comma. A prompt without any placeholder is used as it is, so all previews show the same scene. The LoRA's `<lora:...>` tag is always added in front, and other `<lora:...>` tags in your prompt, such as a speed LoRA, apply to every preview.
+For `lokr-moss-kodachrome-v1.safetensors`, `{lora}` becomes "kodachrome". To name one source only, use `{trigger}`, `{sample}` or `{name}` in the main prompt. A placeholder with nothing to put in is dropped along with its comma. A prompt without any placeholder is used as it is, so all previews show the same scene. The LoRA's `<lora:...>` tag is always added in front, and other `<lora:...>` tags in your prompt, such as a speed LoRA, apply to every preview.
 
 The negative prompt box works the same way: empty, each LoRA gets its own negative; with text, that text is used, and `{lora}` in it becomes the LoRA's own negative.
 
